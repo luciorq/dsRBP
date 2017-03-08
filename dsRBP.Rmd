@@ -1,0 +1,35 @@
+---
+title: "Dipteran dsRBP phylogenetics"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document: default
+  word_document: default
+---
+# Setting envinroment
+```{r}
+system('git config --global user.name "luciorq"')
+system('git config --global user.email "luciorqueiroz@gmail.com"')
+```
+## Testing libraries
+
+## Initial tree
+![Flavia's old tree](images/dsRBP_dipterans_v15.PDF)
+
+# Analysis
+## Loading libraries
+```{r}
+source("src/functions.R")
+```
+## Initializing variables
+```{r}
+sequence_file = "dsRBPv3_LRQ"
+```
+
+```{r}
+sequences <- paste("raw/",sequence_file,sep="")
+## system("rm -rf data/*")
+MLtoSLfasta(sequences)
+RunIprScan((paste("data/",sequence_file,".fasta", sep="")), (paste("data/iprscan_results/",sequence_file, sep = "")))
+
+```
