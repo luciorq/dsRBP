@@ -52,4 +52,4 @@ RUN apt-get update \
 # - liblzma-dev libbz2-dev libiuc-dev (dev libraries needed to build R, also used to build littler & rJava)
 # - default-jdk needed for rJava
 WORKDIR /home/rstudio/dsRBP
-RUN chmod -R 0775 .
+RUN chmod -R 0775 /home/rstudio/dsRBP
