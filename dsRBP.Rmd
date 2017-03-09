@@ -10,6 +10,10 @@ output:
 ```{r}
 system('git config --global user.name "luciorq"')
 system('git config --global user.email "luciorqueiroz@gmail.com"')
+system('git remote add origin https://github.com/luciorq/dsrbp_container_image.git')
+system('git config remote.origin.url https://github.com/luciorq/dsrbp_container_image.git')
+#system('git pull -u origin master')
+system('git push -u origin master')
 ```
 ## Testing libraries
 
@@ -23,7 +27,7 @@ source("src/functions.R")
 ```
 ## Initializing variables
 ```{r}
-sequence_file = "dsRBPv3_LRQ"
+sequence_file = "dsRBPv2_LRQ"
 ```
 
 ```{r}
@@ -31,5 +35,4 @@ sequences <- paste("raw/",sequence_file,sep="")
 ## system("rm -rf data/*")
 MLtoSLfasta(sequences)
 RunIprScan((paste("data/",sequence_file,".fasta", sep="")), (paste("data/iprscan_results/",sequence_file, sep = "")))
-
 ```
