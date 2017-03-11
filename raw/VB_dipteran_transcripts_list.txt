@@ -1,0 +1,10 @@
+https://www.vectorbase.org/sites/default/files/ftp/downloads/Anopheles-funestus-FUMOZ_TRANSCRIPTS_AfunF1.5.fa.gz
+https://www.vectorbase.org/sites/default/files/ftp/downloads/Aedes-aegypti-Liverpool_TRANSCRIPTS_AaegL3.4.fa.gz
+https://www.vectorbase.org/sites/default/files/ftp/downloads/Anopheles-gambiae-PEST_TRANSCRIPTS_AgamP4.5.fa.gz
+https://www.vectorbase.org/sites/default/files/ftp/downloads/Culex-quinquefasciatus-Johannesburg_TRANSCRIPTS_CpipJ2.3.fa.gz
+https://www.vectorbase.org/sites/default/files/ftp/downloads/Lutzomyia-longipalpis-Jacobina_TRANSCRIPTS_LlonJ1.3.fa.gz
+https://www.vectorbase.org/sites/default/files/ftp/downloads/Anopheles-sinensis-SINENSIS_TRANSCRIPTS_AsinS2.2.fa.gz
+https://www.vectorbase.org/sites/default/files/ftp/downloads/Aedes-albopictus-Foshan_TRANSCRIPTS_AaloF1.2.fa.gz
+https://www.vectorbase.org/sites/default/files/ftp/downloads/Glossina-morsitans-Yale_TRANSCRIPTS_GmorY1.6.fa.gz
+https://www.vectorbase.org/sites/default/files/ftp/downloads/Phlebotomus-papatasi-Israel_TRANSCRIPTS_PpapI1.3.fa.gz
+https://www.vectorbase.org/sites/default/files/ftp/downloads/Anopheles-darlingi-Coari_TRANSCRIPTS_AdarC3.4.fa.gz

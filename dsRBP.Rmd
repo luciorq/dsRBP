@@ -27,30 +27,31 @@ output:
 source("src/functions.R")
 ```
 ## Initializing variables
+List of Files used for the analysis
 ```{r}
-tblastn_db = "VectorBase_transcript"
-sequence_file = "dsRBPv3_LRQ"
+tblastn_db = "VB_dipteran_transcripts"
+sequences_file = "dsRBPv3_LRQ"
 ```
-## VectorBase transcripts used for tblasn: 
+## Transcripts used for tblasn: 
+The following library files were used in the analysis 
 ```{r}
-for(line in (a = readLines("raw/VectorBase_list.txt"))){
+for(line in (a = readLines(paste0("raw/",tblastn_db,"_list.txt")))){
   print(unlist(strsplit(line, "/"))[length(unlist(strsplit(line, "/")))])
   }
 ```
-### VectorBase sequences for Blast
+### VectorBase sequences for tBlastn
 ```{r}
-makeVectorBaseDB()
-```
-## Batch InterProScan for `r sequence_file`
-```{r}
-sequences <- paste("raw/",sequence_file,sep="")
-## system("rm -rf data/*")
-MLtoSLfasta(sequences)
-RunIprScan((paste("data/",sequence_file,".fasta", sep="")), 
-           (paste("data/iprscan_results/",sequence_file, sep = "")))
+DownloadLibraries(tblastn_db)
+makeBlastDB(tblastn_db)
 ```
 ## tBlastn against VectorBase transcripts
 ```{r}
-#tBlastn()
+MLtoSLfasta(paste0("raw/",sequences_file))
+tBlastn(paste0("data/",sequences_file,".fasta"), tblastn_db)
+```
+## Batch InterProScan for `r sequences_file`
+```{r}
+RunIprScan((paste0("data/",sequences_file,".fasta")), 
+           (paste0("data/iprscan_results/",sequences_file)))
 ```
 
