@@ -25,33 +25,85 @@ output:
 ## Loading libraries
 ```{r}
 source("src/functions.R")
+source("lib/rmd2rscript.R")
 ```
 ## Initializing variables
 List of Files used for the analysis
+Here you can change the files used for the analysis, inside 'raw' directory
 ```{r}
 tblastn_db = "VB_dipteran_transcripts"
-sequences_file = "dsRBPv3_LRQ"
+sequences_file = "teste1"
+blastx_db = "FB_fly_translated"
 ```
-## Transcripts used for tblasn: 
-The following library files were used in the analysis 
+# VectorBase tBlasn
+## Transcripts used for tBlastn
+tBlastn was performed against the following libraries:
 ```{r}
-for(line in (a = readLines(paste0("raw/",tblastn_db,"_list.txt")))){
+for(line in (readLines(paste0("raw/",tblastn_db,"_list.txt")))){
   print(unlist(strsplit(line, "/"))[length(unlist(strsplit(line, "/")))])
   }
 ```
 ### VectorBase sequences for tBlastn
 ```{r}
 DownloadLibraries(tblastn_db)
-makeBlastDB(tblastn_db)
+makeBlastDB(tblastn_db,"nucl")
 ```
 ## tBlastn against VectorBase transcripts
 ```{r}
 MLtoSLfasta(paste0("raw/",sequences_file))
-tBlastn(paste0("data/",sequences_file,".fasta"), tblastn_db)
+Blast("tblastn",paste0("data/",sequences_file,".fasta"), tblastn_db)
 ```
+### Formatting output
+```{r}
+tblastn_table <- read.csv(paste0("data/",sequences_file,".fasta_alignment.csv"), header = FALSE)
+names(tblastn_table) <- c("querySeqId", "subjectSeqId", "queryLength", "alignmentLength", "E-value", "bitscore", "subjectTitle")
+tblastn_table$subjectTitle <- unlist(lapply(tblastn_table$subjectTitle, function(x) strsplit(as.character(x), split = "|", fixed = TRUE)[[1]][1]))
+```
+### Retrieving hit fasta sequences
+```{r}
+write.table(tblastn_table$subjectSeqId, file = paste0("data/",sequences_file,"_ids.txt"),
+            quote = FALSE, row.names = FALSE, col.names = FALSE)
+RetrieveFasta(tblastn_db,sequences_file)
+```
+
+# FlyBase BlastX
+## Translated Proteins used for reverse BlastX against Fruit Flies
+```{r}
+for(line in (readLines(paste0("raw/",blastx_db,"_list.txt")))){
+  print(unlist(strsplit(line, "/"))[length(unlist(strsplit(line, "/")))])
+  }
+```
+### FlyBase sequences for BlastX
+```{r}
+DownloadLibraries(blastx_db)
+makeBlastDB(blastx_db, "prot")
+```
+## Reverse BlastX against fruit flies
+```{r}
+Blast("blastx",paste0("data/",sequences_file,"_blast_result.fasta"), blastx_db)
+```
+### Formatting output
+```{r}
+# blastx_table <- read.csv(paste0("data/",sequences_file,"_blast_result.fasta_alignment.csv"), header = FALSE)
+# names(blastx_table) <- c("querySeqId", "subjectSeqId", "queryLength", "alignmentLength", "E-value", "bitscore", "subjectTitle")
+# blastx_table$subjectTitle <- unlist(lapply(blastx_table$subjectTitle, function(x) strsplit(as.character(x), split = "|", fixed = TRUE)[[1]][1]))
+# head(blastx_table$subjectTitle)
+```
+
+
+
+
+
+
+
+# INTERPRO Scan
 ## Batch InterProScan for `r sequences_file`
 ```{r}
 RunIprScan((paste0("data/",sequences_file,".fasta")), 
            (paste0("data/iprscan_results/",sequences_file)))
 ```
+```{r}
+rmd2rscript("dsRBP.Rmd")
+```
+
 

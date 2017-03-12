@@ -25,7 +25,7 @@ RUN apt-get update \
     vim \
     ## Lucio's mod
     mafft \
-     ncbi-blast+ \
+    ncbi-blast+ \
     default-jdk \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
@@ -41,7 +41,6 @@ RUN apt-get update \
   && . /etc/environment \ 
   && install2.r --error --repos $MRAN --deps TRUE \
     bookdown rticles rmdshower
-
 ## Consider including: 
 # - libv8-dev (Javascript V8 packages)
 # - yihui/printr R package (when released to CRAN)
