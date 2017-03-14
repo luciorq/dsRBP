@@ -35,7 +35,7 @@ Blast <- function(blast_program, query_file, db_name, outformat = 10){
   ## output format parameter: 6=tab-file, 7=tab-file w/ comment, 10=csv-file
   ## query seq id, subject seq id, query length, alignment length, Evalue, bitscore, Subject title
   if(!file.exists(output_file)){
-    a = system2(blast_program, args = c("-db",db_name,
+    system2(blast_program, args = c("-db",db_name,
                                     "-query",query_file,
                                     "-out", output_file,
                                     "-outfmt", paste0('"',outformat,' qseqid sseqid qlen length evalue bitscore stitle"'))
@@ -65,6 +65,50 @@ RunIprScan <- function (fasta_file , result_folder) {
     }
     return(length(output))
 }
+## extract Open reading frames from nucleotide sequences in fasta file using EMBOSS software
+##  # -find 1 (Translation of regions between START and STOP codons); -minsize 200 (Minimum nucleotide size of ORF to report [Any integer value])
+GetORF <- function(sequences_file){
+  a = system(paste0("getorf -sequence data/",sequences_file,"_nucl_blast_result.fasta -outseq data/",
+                    sequences_file,"_orf.fasta -find 1 -minsize 200"),
+             intern = TRUE, ignore.stdout = TRUE, ignore.stderr = TRUE)
+  print(paste0("data/",sequences_file,"_orf.fasta"))
+}
+## Retrieve fasta file for ORFS with hit for Interpro domain term
+ORFwithDomain <- function(sequences_file, InterPro){
+  orf_id = c()
+  orf_seq = c()
+  for(orf_file in list.files(paste0("data/iprscan_results/",sequences_file,"_orf/"))){
+    XMLfile <- paste(readLines(paste0("data/iprscan_results/",sequences_file,"_orf/",orf_file)))
+    if(length(grep(InterPro, XMLfile)) > 0){
+      new_id= unlist(strsplit(XMLfile[5]," <xref id=\""))[2]
+      new_id = unlist(strsplit(new_id, '\"/>'))[1]
+      new_id = paste0(">",new_id)
+      orf_id = c(orf_id, new_id)
+      new_seq = unlist(strsplit(XMLfile[4],"\\\">"))[2]
+      new_seq = unlist(strsplit(new_seq,"<"))[1]
+      orf_seq = c(orf_seq, new_seq)
+    }
+  }
+ output = paste0("data/",sequences_file,"_domain_filtered_ORF.fasta")
+  for(i in 1:length(orf_id)){
+    cat(orf_id[i],file = output, append = TRUE, sep = "\n")
+    cat(orf_seq[i],file = output, append = TRUE, sep = "\n")
+  }
+}
 
+## multiple sequence alignment using MAFFT auto by default from protein sequences in fasta format
+Alignment <- function(program = "mafft", parameter = "", input){
+  a = system2(program, args = c(parameter, paste0("data/",input,"_result_nr.fasta"),">",
+                                paste0("data/",input,"_result.aligned.fasta")),stdout=TRUE, stderr = TRUE)
+}
+## 
+BuildTrees <- function(input_file, outgroup){
+  system(paste0("Rscript --no-save src/RootedTree.R data/",
+                input_file,"_result.aligned.fasta ", outgroup) )#, intern = TRUE, ignore.stdout = TRUE, ignore.stderr = TRUE)
+}
+##
+FilterFastaRedundancy <- function(input_file, output_file){
+  system2("perl", args = c("src/FilterFastaRedundancy.pl",input_file, ">", output_file))
+}
 
 

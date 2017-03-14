@@ -9,7 +9,7 @@ pkgs <- c(
 #"BiocParallel",
 #"biocViews",
 #"biomaRt",
-#"Biostrings",
+"Biostrings",
 #"BSgenome",
 # Temporarily disabled because it does not build in devel-3.5 yet
 #"epivizr",
