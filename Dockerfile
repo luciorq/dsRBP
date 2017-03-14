@@ -26,6 +26,7 @@ RUN apt-get update \
     ## Lucio's mod
     mafft \
     ncbi-blast+ \
+    emboss \
     default-jdk \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
@@ -40,7 +41,7 @@ RUN apt-get update \
   ## And some nice R packages for publishing-related stuff 
   && . /etc/environment \ 
   && install2.r --error --repos $MRAN --deps TRUE \
-    bookdown rticles rmdshower
+    bookdown rticles rmdshower ggrepel seqinr
 ## Consider including: 
 # - libv8-dev (Javascript V8 packages)
 # - yihui/printr R package (when released to CRAN)
@@ -50,5 +51,21 @@ RUN apt-get update \
 # - libgsl0-dev (GSL math library dependencies)
 # - liblzma-dev libbz2-dev libiuc-dev (dev libraries needed to build R, also used to build littler & rJava)
 # - default-jdk needed for rJava
+
+## From bioconductor release_base
+### bioclite install
+RUN  rm -f /var/lib/dpkg/available && rm -rf  /var/cache/apt/*
+RUN apt-get update && \
+    apt-get -y  install --fix-missing gdb libxml2-dev python-pip
+    # valgrind
+RUN pip install awscli
+ADD lib/install.R /tmp/
+RUN R -f /tmp/install.R && \
+    echo "library(BiocInstaller)" > $HOME/.Rprofile
+## Bioconductor packages
+ADD lib/installpackages.R /tmp/
+RUN R -f /tmp/installpackages.R
+
+## luciorq mod
 WORKDIR /home/rstudio/dsRBP
 RUN chmod -R 0775 /home/rstudio/dsRBP

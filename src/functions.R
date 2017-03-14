@@ -12,7 +12,7 @@ makeBlastDB <- function(db_name, db_type){
     if(!dir.exists(paste0("data/",db_name))){dir.create(paste0("data/",db_name))}
     system(paste0("cat $(ls -t raw/",db_name,"/*.fa*) > data/",db_name,"/",db_name,".fsa"))
   }
-  if(!file.exists(paste0("data/",db_name,"/",db_name,".fsa.nhr"))){
+  if((!file.exists(paste0("data/",db_name,"/",db_name,".fsa.nhr"))) & (!file.exists(paste0("data/",db_name,"/",db_name,".fsa.phr")))){
     a = system2("makeblastdb", args = c("-in", paste0("data/",db_name,"/",db_name,".fsa"), 
                                   "-parse_seqids", "-dbtype",db_type, 
                                   "-title", db_name),
@@ -26,16 +26,19 @@ MLtoSLfasta <- function( ML_fasta ){
   a = system2("python", c("src/FastaMultiLineToSingle.py", ML_fasta ),stdout=TRUE)
 } 
 ## Local Blast using Blast+ software package
-Blast <- function(blast_program, query_file, db_name){
+Blast <- function(blast_program, query_file, db_name, outformat = 10){
   db_name <- paste0("data/",db_name,"/",db_name,".fsa")
   output_file <- paste0(query_file,"_alignment.csv")
+  if(outformat == 6){
+    output_file <- paste0(query_file,"_alignment.tab")
+  }
   ## output format parameter: 6=tab-file, 7=tab-file w/ comment, 10=csv-file
   ## query seq id, subject seq id, query length, alignment length, Evalue, bitscore, Subject title
   if(!file.exists(output_file)){
     a = system2(blast_program, args = c("-db",db_name,
                                     "-query",query_file,
                                     "-out", output_file,
-                                    "-outfmt", '"10 qseqid sseqid qlen length evalue bitscore stitle"')
+                                    "-outfmt", paste0('"',outformat,' qseqid sseqid qlen length evalue bitscore stitle"'))
                 ,stdout=TRUE)
   }
 }

@@ -1,15 +1,15 @@
 ---
 title: "Dipteran dsRBP phylogenetics"
 output:
-  pdf_document: default
-  html_notebook: default
   html_document: default
+  html_notebook: default
+  pdf_document: default
   word_document: default
 ---
 # Setting envinroment
 ```{r}
-#system('git config --global user.name "luciorq"')
-#system('git config --global user.email "luciorqueiroz@gmail.com"')
+system('git config --global user.name "luciorq"')
+system('git config --global user.email "luciorqueiroz@gmail.com"')
 #system('git remote add origin https://github.com/luciorq/dsrbp_container_image.git')
 #system('git remote add origin https://github.com/luciorq/dsrbp_container_image.git')
 #system('git config remote.origin.url https://github.com/luciorq/dsrbp_container_image.git')
@@ -58,6 +58,8 @@ Blast("tblastn",paste0("data/",sequences_file,".fasta"), tblastn_db)
 tblastn_table <- read.csv(paste0("data/",sequences_file,".fasta_alignment.csv"), header = FALSE)
 names(tblastn_table) <- c("querySeqId", "subjectSeqId", "queryLength", "alignmentLength", "E-value", "bitscore", "subjectTitle")
 tblastn_table$subjectTitle <- unlist(lapply(tblastn_table$subjectTitle, function(x) strsplit(as.character(x), split = "|", fixed = TRUE)[[1]][1]))
+tblastn_table <- subset(tblastn_table, (`E-value` < 1e-03))
+head(tblastn_table)
 ```
 ### Retrieving hit fasta sequences
 ```{r}
@@ -80,18 +82,49 @@ makeBlastDB(blastx_db, "prot")
 ```
 ## Reverse BlastX against fruit flies
 ```{r}
-Blast("blastx",paste0("data/",sequences_file,"_blast_result.fasta"), blastx_db)
+Blast("blastx",paste0("data/",sequences_file,"_blast_result.fasta"), blastx_db, outformat = 6)
 ```
 ### Formatting output
 ```{r}
-# blastx_table <- read.csv(paste0("data/",sequences_file,"_blast_result.fasta_alignment.csv"), header = FALSE)
-# names(blastx_table) <- c("querySeqId", "subjectSeqId", "queryLength", "alignmentLength", "E-value", "bitscore", "subjectTitle")
-# blastx_table$subjectTitle <- unlist(lapply(blastx_table$subjectTitle, function(x) strsplit(as.character(x), split = "|", fixed = TRUE)[[1]][1]))
-# head(blastx_table$subjectTitle)
+system(paste0("sort -k1,1 -k6,6nr -k5,5n data/",sequences_file,"_blast_result.fasta_alignment.tab | sort -u -k 1,1 --merge > data/",sequences_file,"_filtered.tab"))
+blastx_table <- read.table(paste0("data/",sequences_file,"_filtered.tab"), header = FALSE )
+blastx_table$V7 <- blastx_table$V10
+names(blastx_table) <- c("querySeqId", "subjectSeqId", "queryLength", "alignmentLength", "E-value", "bitscore", "subjectTitle")
+blastx_table <- blastx_table[,1:7]
+head(blastx_table)
+```
+### Formatting table
+```{r}
+reverse_blast_list = c()
+reverse_evalue_list = c()
+for(transcript in tblastn_table$subjectSeqId){
+  i = 1
+  for(hit in blastx_table$querySeqId){
+    if(transcript == hit){
+      title_name = as.character(blastx_table$subjectTitle[i])
+      reverse_blast_list = c(reverse_blast_list, title_name)
+      reverse_evalue = blastx_table$`E-value`[i]
+      reverse_evalue_list = c(reverse_evalue_list, reverse_evalue)
+    }
+    i = i + 1
+  }
+  #print (transcript)
+}
+final_document <- tblastn_table[,c("querySeqId","subjectSeqId","E-value","subjectTitle")]
+final_document$reverseBlast <- reverse_blast_list
+final_document$reverseBlastEvalue <- reverse_evalue_list
+#final_document <- subset(final_document, (`E-value` < 1e-03))
+write.csv(final_document, file = paste0("results/",sequences_file,".csv"), row.names = FALSE)
+final_document
 ```
 
-
-
+### Retrieving transcripts fasta sequences
+```{r}
+write.table(final_document$subjectSeqId, file = paste0("data/",sequences_file,"final_ids.txt"),
+            quote = FALSE, row.names = FALSE, col.names = FALSE)
+RetrieveFasta(tblastn_db,paste0(sequences_file,"final"))
+paste0("data/",sequences_file,"final_blast_result.fasta")
+```
 
 
 
