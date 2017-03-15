@@ -4,7 +4,7 @@ lapply(list_of_packages, require, character.only = TRUE)
 
 args = commandArgs(trailingOnly = TRUE)
 fasta_alignment = args[1]
-#fasta_alignment = "data/teste1_result.aligned.fasta"
+#fasta_alignment = "data/dsRBPv1_result.aligned.fasta"
 out_group = args[2]
 #out_group = "Ce.Rde-4"
     
@@ -44,6 +44,7 @@ circular_tree = ggtree(prot_tree, ladderize = TRUE, branch.length="none", layout
 file_name = unlist(strsplit(fasta_alignment,"/"))[2]
 tree_height = (11 / 74 ) * length(prot_align$seq)
 
+## creating PDF plots
 pdf(paste("plots/",file_name,".rooted_tree",".pdf",sep = ""), width = 11.5, height = tree_height )
 print(tree)
 dev.off()
@@ -53,6 +54,20 @@ print(msa_tree)
 dev.off()
 
 pdf(paste("plots/",file_name,".circular_tree",".pdf",sep = ""), width = 11.5, height = 11)
+print(circular_tree)
+dev.off()
+
+
+## Creating PNG images
+png(paste("images/",file_name,".rooted_tree",".png",sep = "") )
+print(tree)
+dev.off()
+
+png(paste("images/",file_name,".msa_tree",".png",sep = "") )
+print(msa_tree)
+dev.off()
+
+png(paste("images/",file_name,".circular_tree",".png",sep = ""))
 print(circular_tree)
 dev.off()
 

@@ -1,34 +1,54 @@
 ---
-title: "Dipteran dsRBP phylogenetics"
+title: "Meeting"
+author: "Lucio Rezende Queiroz"
+date: March 15, 2017
 output:
-  html_document: default
+  ioslides_presentation:
+    logo: images/rnai_logo.png
   html_notebook: default
+  html_document: default
   pdf_document: default
   word_document: default
 ---
+
+# Reproducibility in science
+
+----
+
+<img src="images/EVE/Reproductibility.png" width="600" height="600" />
+
+## Tools
+
+![Circular tree](images/images.jpg)
+![Circular tree](images/Rstudio.jpg)
+![Circular tree](images/docker_logo.png)
+
+# Dipteran dsRBP phylogenetics
+
 # Setting envinroment
+
 ```{r}
 args = commandArgs(trailingOnly=TRUE)
 system('git config --global user.name "luciorq"')
 system('git config --global user.email "luciorqueiroz@gmail.com"')
 ```
-## Testing libraries
-
-## Initial tree
-![Flavia's old tree](images/dsRBP_dipterans_v15.PDF)
-
 # Analysis
+
 ## Loading libraries
+
 ```{r}
 source("src/functions.R")
 source("lib/rmd2rscript.R")
+require(dplyr)
 ```
+
 ## Initializing variables
+
 List of Files used for the analysis
 Here you can change the files used for the analysis, inside 'raw' directory
 ```{r}
 if(length(args)==0) {
-  sequences_file = "teste1"
+  sequences_file = "dsRBPv1"
   InterPro = "IPR014720"
   }else{
     sequences_file = args[1]
@@ -37,33 +57,58 @@ if(length(args)==0) {
 tblastn_db = "VB_dipteran_transcripts"
 blastx_db = "FB_fly_translated"
 ```
+
+----
+
+```{r}
+system(paste0("grep '>' raw/",sequences_file), intern = TRUE)
+```
+
 # VectorBase tBlasn
+
 ## Transcripts used for tBlastn
+
 tBlastn was performed against the following libraries:
 ```{r}
 for(line in (readLines(paste0("raw/",tblastn_db,"_list.txt")))){
   print(unlist(strsplit(line, "/"))[length(unlist(strsplit(line, "/")))])
   }
 ```
+
 ### VectorBase sequences for tBlastn
+
 ```{r}
 DownloadLibraries(tblastn_db)
 makeBlastDB(tblastn_db,"nucl")
 ```
+
 ## tBlastn against VectorBase transcripts
+
 ```{r}
 MLtoSLfasta(paste0("raw/",sequences_file))
 Blast("tblastn",paste0("data/",sequences_file,".fasta"), tblastn_db)
 ```
+
 ### Formatting output
+
 ```{r}
 tblastn_table <- read.csv(paste0("data/",sequences_file,".fasta_alignment.csv"), header = FALSE)
 names(tblastn_table) <- c("querySeqId", "subjectSeqId", "queryLength", "alignmentLength", "E-value", "bitscore", "subjectTitle")
 tblastn_table$subjectTitle <- unlist(lapply(tblastn_table$subjectTitle, function(x) strsplit(as.character(x), split = "|", fixed = TRUE)[[1]][1]))
 tblastn_table <- subset(tblastn_table, (`E-value` < 1e-03))
-head(tblastn_table)
 ```
+
+----
+
+### Blast table {.smaller}
+
+```{r}
+tblastn_table
+```
+
+
 ### Retrieving hit fasta sequences
+
 ```{r}
 write.table(tblastn_table$subjectSeqId, file = paste0("data/",sequences_file,"_ids.txt"),
             quote = FALSE, row.names = FALSE, col.names = FALSE)
@@ -71,57 +116,98 @@ RetrieveFasta(tblastn_db,sequences_file)
 ```
 
 # FlyBase BlastX
+
 ## Translated Proteins used for reverse BlastX against Fruit Flies
+
 ```{r}
 for(line in (readLines(paste0("raw/",blastx_db,"_list.txt")))){
   print(unlist(strsplit(line, "/"))[length(unlist(strsplit(line, "/")))])
   }
 ```
+
 ### FlyBase sequences for BlastX
+
 ```{r}
 DownloadLibraries(blastx_db)
 makeBlastDB(blastx_db, "prot")
 ```
+
 ## Reverse BlastX against fruit flies
+
 ```{r}
 #FilterFastaRedundancy(paste0("data/",sequences_file,"_blast_result.fasta"))
-Blast("blastx",paste0("data/",sequences_file,"_blast_result.fasta"), blastx_db, outformat = 6)
+FilterFastaRedundancy(paste0("data/",sequences_file,"_blast_result.fasta"),paste0("data/",sequences_file,"_blast_result_nr.fasta") )
+Blast("blastx",paste0("data/",sequences_file,"_blast_result_nr.fasta"), blastx_db, outformat = 6)
 ```
+
 ### Formatting output
+
 ```{r}
-system(paste0("sort -k1,1 -k6,6nr -k5,5n data/",sequences_file,"_blast_result.fasta_alignment.tab | sort -u -k 1,1 --merge > data/",sequences_file,"_filtered.tab"))
+system(paste0("sort -k1,1 -k6,6nr -k5,5n data/",sequences_file,"_blast_result_nr.fasta_alignment.tab | sort -u -k 1,1 --merge > data/",sequences_file,"_filtered.tab"))
 blastx_table <- read.table(paste0("data/",sequences_file,"_filtered.tab"), header = FALSE )
-#blastx_table <- read.table(paste0("data/",sequences_file,"_blast_result.fasta_alignment.tab"), header = FALSE )
 blastx_table$V7 <- blastx_table$V10
 names(blastx_table) <- c("querySeqId", "subjectSeqId", "queryLength", "alignmentLength", "E-value", "bitscore", "subjectTitle")
 blastx_table <- blastx_table[,1:7]
-head(blastx_table)
 ```
+
+----
+
+### Reverse Blast table {.smaller}
+
+```{r}
+blastx_table
+```
+
 ### Formatting table
+
 ```{r}
 #FormatTable()
 reverse_blast_list = c()
+reverse_title_list = c()
 reverse_evalue_list = c()
 for(transcript in tblastn_table$subjectSeqId){
   i = 1
   for(hit in blastx_table$querySeqId){
     if(hit == transcript){
-      hit_name = as.character(blastx_table$subjectTitle[i])
+      hit_name = as.character(blastx_table$querySeqId[i])
       reverse_blast_list = c(reverse_blast_list, hit_name)
+      Title_name = as.character(blastx_table$subjectTitle[i])
+      reverse_title_list = c(reverse_title_list, Title_name)
       reverse_evalue = blastx_table$`E-value`[i]
       reverse_evalue_list = c(reverse_evalue_list, reverse_evalue)
     }
     i = i + 1
   }
 }
-
 final_document <- tblastn_table[,c("querySeqId","subjectSeqId","E-value","subjectTitle")]
+for(i in 1:length(final_document$subjectSeqId)){
+  for(j in 1:length(reverse_blast_list)){
+    if(as.character(final_document$subjectSeqId[[i]]) == reverse_blast_list[j]){
+      final_document$reverseBlast[i] <- reverse_title_list[j]
+      final_document$reverseBlastEvalue[i] <- reverse_evalue_list[j]
+    }
+  }
+}
+
 #final_document$reverseBlast <- reverse_blast_list
 #final_document$reverseBlastEvalue <- reverse_evalue_list
 final_document <- subset(final_document, (`E-value` < 1e-03))
+final_document <- arrange(final_document, subjectSeqId)
 write.csv(final_document, file = paste0("results/",sequences_file,".csv"), row.names = FALSE)
+```
+
+----
+
+### formatted table {.smaller}
+
+```{r}
 final_document
 ```
+
+----
+
+<img src="images/final_table.png" width="800" height="700" />
+
 
 ### Retrieving transcripts fasta sequences
 ```{r}
@@ -136,40 +222,160 @@ GetORF(sequences_file)
 ```
 ### Extracting domain information from ORFs
 ```{r}
-RunIprScan((paste0("data/",sequences_file,"_orf.fasta")), 
-           (paste0("data/iprscan_results/",sequences_file,"_orf")))
+#RunIprScan((paste0("data/",sequences_file,"_orf.fasta")), 
+#          (paste0("data/iprscan_results/",sequences_file,"_orf")))
 ```
-### Retrieving ORFs with `r InterPro` domain
+
+----
+
+Number of transcripts:
+```{r}
+system(paste0("ls -l data/iprscan_results/",sequences_file,"_orf/ | cut -f 1 -d'_' | grep -oP '...........RA$' | sort -k1,1 | sort -k1,1 -u | wc -l"), intern = TRUE)
+```
+Number of ORFs:
+```{r}
+system(paste0("ls -l data/iprscan_results/",sequences_file,"_orf/ | cut -f 1 -d'_' | grep -oP '...........RA$' | sort -k1,1 | sort -k1,1 | wc -l"), intern = TRUE)
+```
+
+## Retrieving ORFs with `r InterPro` domain
 ```{r}
 ORFwithDomain(sequences_file, InterPro)
 ```
+Number of ORFs with hit for `r InterPro` domain
+```{r}
+system(paste0("grep '>' data/",sequences_file,"_domain_filtered_ORF.fasta | wc -l"), intern = TRUE )
+```
 
-### Concatenating novel translated transcripts to the 'raw' data
+## Concatenating novel translated transcripts to the 'raw' data
+
 ```{r}
 system(paste0("cat data/",sequences_file,".fasta > data/",sequences_file,"_result.fasta"))
 system(paste0("cat data/",sequences_file,"_domain_filtered_ORF.fasta >> data/",sequences_file,"_result.fasta"))
+system(paste0("grep '>' data/",sequences_file,"_result.fasta | wc -l"), intern = TRUE)
 ```
-# INTERPRO Scan
-## Batch InterProScan for `r sequences_file`
+
+## Interpro domains with more hits:
+
 ```{r}
-#RunIprScan((paste0("data/",sequences_file,"_result.fasta")), 
-#           (paste0("data/iprscan_results/",sequences_file)))
+system(paste0("python src/ipr2tsv.py data/iprscan_results/",sequences_file,"_orf/ | cut -f 2 | sort | uniq -c | sort -k1,1 -nr | head -10"), intern = TRUE)
 ```
 
 # Building Trees
+
 ## MAFFT alignment
+
+number of sequences aligned after redundancy filter:
 ```{r}
 FilterFastaRedundancy(paste0("data/",sequences_file,"_result.fasta"),paste0("data/",sequences_file,"_result_nr.fasta") )
 Alignment("mafft","--auto", sequences_file)
+system(paste0("grep '>' data/",sequences_file,"_result_nr.fasta | wc -l"), intern = TRUE)
 ```
-##
-```{r}
+
+## Trees
+
+```{r} 
 BuildTrees(sequences_file, "Ce.Rde-4")
 ```
 
+----
+
+![Rooted tree](images/dsRBPv1_result.aligned.fasta.rooted_tree.png)
+
+----
+
+<img src="images/tree_zoom_1.png" width="800" height="600" />
+
+
+----
+
+<img src="images/tree_zoom_2.png" width="800" height="600" />
+
+----
+
+![MSA tree](images/dsRBPv1_result.aligned.fasta.msa_tree.png)
+
+----
+
+![Circular tree](images/dsRBPv1_result.aligned.fasta.circular_tree.png)
+
 # Converting this notebook to an executable script
+
 ```{r}
 rmd2rscript("dsRBP.Rmd")
 ```
 
+# Another Project
+
+# Viral Classification
+
+## Previous study
+
+Used Size Distribution and Base Enrichment to characterized Viral contigs
+
+<img src="images/EVE/Eric_strategy.png" width="800" height="400" />
+
+## ORF profile
+
+
+-Viral sequences:
+--Source :  The Discovery, Distribution, and Evolution of Viruses Associated with Drosophila melanogaster 
+__Obbard et al, 2015__
+
+<img src="images/EVE/obbard_virus.png" width="400" height="700" />
+
+----
+
+<img src="images/EVE/dmel_virus_orf.png" width="800" height="700" />
+
+----
+
+<img src="images/EVE/ORF_histogram_plot.nolimit.png" width="800" height="500" />
+
+----
+
+<img src="images/EVE/ORF_histogram_plot.xlim400.png" width="800" height="500" />
+
+## Dinucleotide and Trinucleotide frequencies
+
+- Compare with expected values (Odds ratio)
+
+<img src="images/EVE/codon_bias.jpg" width="400" height="400" />
+
+
+## Generating Profiles
+
+<img src="images/EVE/DCV_profile.png" width="800" height="400" />
+
+----
+
+<img src="images/EVE/PCLV_profile.png" width="800" height="400" />
+
+## Creating a Database
+
+- Training Databases
+- Organism databases
+- __BIG FILE__ full of numbers
+
+## Comparing the profiles 
+
+<img src="images/EVE/corr-plot.png" width="500" height="500" />
+
+## Decision tree
+
+<img src="images/EVE/Decision_Tree_color.png" width="800" height="500" />
+
+
+# How can we improve?
+
+- Ramdom Forests
+- Permutation tests for clustering
+- Use confidence interval for the ODDs ratio
+- Have a good training database
+
+
+## Acknowledgement
+
+![RNAi Lab Group](images/rnai_group.png)
+
+![ppg_logo](images/logoBioinformatica.png)
 

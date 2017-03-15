@@ -98,17 +98,19 @@ ORFwithDomain <- function(sequences_file, InterPro){
 
 ## multiple sequence alignment using MAFFT auto by default from protein sequences in fasta format
 Alignment <- function(program = "mafft", parameter = "", input){
-  a = system2(program, args = c(parameter, paste0("data/",input,"_result_nr.fasta"),">",
-                                paste0("data/",input,"_result.aligned.fasta")),stdout=TRUE, stderr = TRUE)
+  if(!file.exists(paste0("data/",input,"_result.aligned.fasta"))){
+    a = system2(program, args = c(parameter, paste0("data/",input,"_result_nr.fasta"),">",
+                                  paste0("data/",input,"_result.aligned.fasta")),stdout=TRUE, stderr = TRUE)
+  }
 }
 ## 
 BuildTrees <- function(input_file, outgroup){
-  system(paste0("Rscript --no-save src/RootedTree.R data/",
-                input_file,"_result.aligned.fasta ", outgroup) )#, intern = TRUE, ignore.stdout = TRUE, ignore.stderr = TRUE)
+  a = system(paste0("Rscript --no-save src/RootedTree.R data/",
+                input_file,"_result.aligned.fasta ", outgroup), intern = TRUE, ignore.stdout = TRUE, ignore.stderr = TRUE)
 }
 ##
 FilterFastaRedundancy <- function(input_file, output_file){
-  system2("perl", args = c("src/FilterFastaRedundancy.pl",input_file, ">", output_file))
+  a = system2("perl", args = c("src/FilterFastaRedundancy.pl",input_file, ">", output_file),stdout=TRUE, stderr = TRUE)
 }
 
 
