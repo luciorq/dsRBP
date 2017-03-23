@@ -1,13 +1,13 @@
 ---
 title: "Meeting"
 author: "Lucio Rezende Queiroz"
-date: March 15, 2017
+date: "March 15, 2017"
 output:
+  pdf_document: default
+  html_notebook: default
   ioslides_presentation:
     logo: images/rnai_logo.png
-  html_notebook: default
   html_document: default
-  pdf_document: default
   word_document: default
 ---
 
