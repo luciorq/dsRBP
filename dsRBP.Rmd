@@ -1,27 +1,22 @@
 ---
-title: "Meeting"
+title: "Phylogenetics"
 author: "Lucio Rezende Queiroz"
 date: "March 15, 2017"
 output:
   pdf_document: default
   html_notebook: default
-  ioslides_presentation:
-    logo: images/rnai_logo.png
+  ioslides_presentation: default
   html_document: default
   word_document: default
 ---
 
 # Reproducibility in science
 
-----
-
-<img src="images/EVE/Reproductibility.png" width="600" height="600" />
-
 ## Tools
 
-![Circular tree](images/images.jpg)
-![Circular tree](images/Rstudio.jpg)
-![Circular tree](images/docker_logo.png)
+![R logo](images/images.jpg)
+![Rstudio logo](images/Rstudio.jpg)
+![Docker logo](images/docker_logo.png)
 
 # Dipteran dsRBP phylogenetics
 
@@ -46,6 +41,7 @@ require(dplyr)
 
 List of Files used for the analysis
 Here you can change the files used for the analysis, inside 'raw' directory
+
 ```{r}
 if(length(args)==0) {
   sequences_file = "dsRBPv1"
@@ -103,9 +99,8 @@ tblastn_table <- subset(tblastn_table, (`E-value` < 1e-03))
 ### Blast table {.smaller}
 
 ```{r}
-tblastn_table
+head(tblastn_table)
 ```
-
 
 ### Retrieving hit fasta sequences
 
@@ -155,7 +150,7 @@ blastx_table <- blastx_table[,1:7]
 ### Reverse Blast table {.smaller}
 
 ```{r}
-blastx_table
+head(blastx_table)
 ```
 
 ### Formatting table
@@ -201,39 +196,42 @@ write.csv(final_document, file = paste0("results/",sequences_file,".csv"), row.n
 ### formatted table {.smaller}
 
 ```{r}
-final_document
+head(final_document)
 ```
 
 ----
 
-<img src="images/final_table.png" width="800" height="700" />
-
-
 ### Retrieving transcripts fasta sequences
+
 ```{r}
 write.table(final_document$subjectSeqId, file = paste0("data/",sequences_file,"_nucl_ids.txt"),
             quote = FALSE, row.names = FALSE, col.names = FALSE)
 RetrieveFasta(tblastn_db,paste0(sequences_file,"_nucl"))
 paste0("data/",sequences_file,"_nucl_blast_result.fasta")
 ```
+
 ## Finding dsRBP domain in ORFs from transcripts
-```{r}
+
 GetORF(sequences_file)
 ```
 ### Extracting domain information from ORFs
 ```{r}
-#RunIprScan((paste0("data/",sequences_file,"_orf.fasta")), 
-#          (paste0("data/iprscan_results/",sequences_file,"_orf")))
+RunIprScan((paste0("data/",sequences_file,"_orf.fasta")), 
+          (paste0("data/iprscan_results/",sequences_file,"_orf")))
 ```
+run local
+interproscan.sh -i data/dsRBPv1_orf.fasta -d data/iprscan_results/dsRBPv1_local -f XML &
 
 ----
 
 Number of transcripts:
 ```{r}
+print("Number of transcripts:")
 system(paste0("ls -l data/iprscan_results/",sequences_file,"_orf/ | cut -f 1 -d'_' | grep -oP '...........RA$' | sort -k1,1 | sort -k1,1 -u | wc -l"), intern = TRUE)
 ```
 Number of ORFs:
 ```{r}
+print("Number of ORFs:")
 system(paste0("ls -l data/iprscan_results/",sequences_file,"_orf/ | cut -f 1 -d'_' | grep -oP '...........RA$' | sort -k1,1 | sort -k1,1 | wc -l"), intern = TRUE)
 ```
 
@@ -243,6 +241,7 @@ ORFwithDomain(sequences_file, InterPro)
 ```
 Number of ORFs with hit for `r InterPro` domain
 ```{r}
+print(paste0("Number of ORFS with hit for ",InterPro," domain:"))
 system(paste0("grep '>' data/",sequences_file,"_domain_filtered_ORF.fasta | wc -l"), intern = TRUE )
 ```
 
@@ -257,8 +256,10 @@ system(paste0("grep '>' data/",sequences_file,"_result.fasta | wc -l"), intern =
 ## Interpro domains with more hits:
 
 ```{r}
+print("Hits per domain:")
 system(paste0("python src/ipr2tsv.py data/iprscan_results/",sequences_file,"_orf/ | cut -f 2 | sort | uniq -c | sort -k1,1 -nr | head -10"), intern = TRUE)
 ```
+
 
 # Building Trees
 
@@ -268,6 +269,7 @@ number of sequences aligned after redundancy filter:
 ```{r}
 FilterFastaRedundancy(paste0("data/",sequences_file,"_result.fasta"),paste0("data/",sequences_file,"_result_nr.fasta") )
 Alignment("mafft","--auto", sequences_file)
+print("Number of sequences used for alignemnt:")
 system(paste0("grep '>' data/",sequences_file,"_result_nr.fasta | wc -l"), intern = TRUE)
 ```
 
@@ -277,100 +279,12 @@ system(paste0("grep '>' data/",sequences_file,"_result_nr.fasta | wc -l"), inter
 BuildTrees(sequences_file, "Ce.Rde-4")
 ```
 
-----
-
-![Rooted tree](images/dsRBPv1_result.aligned.fasta.rooted_tree.png)
-
-----
-
-<img src="images/tree_zoom_1.png" width="800" height="600" />
-
-
-----
-
-<img src="images/tree_zoom_2.png" width="800" height="600" />
-
-----
-
-![MSA tree](images/dsRBPv1_result.aligned.fasta.msa_tree.png)
-
-----
-
-![Circular tree](images/dsRBPv1_result.aligned.fasta.circular_tree.png)
-
 # Converting this notebook to an executable script
 
 ```{r}
 rmd2rscript("dsRBP.Rmd")
 ```
-
-# Another Project
-
-# Viral Classification
-
-## Previous study
-
-Used Size Distribution and Base Enrichment to characterized Viral contigs
-
-<img src="images/EVE/Eric_strategy.png" width="800" height="400" />
-
-## ORF profile
-
-
--Viral sequences:
---Source :  The Discovery, Distribution, and Evolution of Viruses Associated with Drosophila melanogaster 
-__Obbard et al, 2015__
-
-<img src="images/EVE/obbard_virus.png" width="400" height="700" />
-
-----
-
-<img src="images/EVE/dmel_virus_orf.png" width="800" height="700" />
-
-----
-
-<img src="images/EVE/ORF_histogram_plot.nolimit.png" width="800" height="500" />
-
-----
-
-<img src="images/EVE/ORF_histogram_plot.xlim400.png" width="800" height="500" />
-
-## Dinucleotide and Trinucleotide frequencies
-
-- Compare with expected values (Odds ratio)
-
-<img src="images/EVE/codon_bias.jpg" width="400" height="400" />
-
-
-## Generating Profiles
-
-<img src="images/EVE/DCV_profile.png" width="800" height="400" />
-
-----
-
-<img src="images/EVE/PCLV_profile.png" width="800" height="400" />
-
-## Creating a Database
-
-- Training Databases
-- Organism databases
-- __BIG FILE__ full of numbers
-
-## Comparing the profiles 
-
-<img src="images/EVE/corr-plot.png" width="500" height="500" />
-
-## Decision tree
-
-<img src="images/EVE/Decision_Tree_color.png" width="800" height="500" />
-
-
 # How can we improve?
-
-- Ramdom Forests
-- Permutation tests for clustering
-- Use confidence interval for the ODDs ratio
-- Have a good training database
 
 
 ## Acknowledgement

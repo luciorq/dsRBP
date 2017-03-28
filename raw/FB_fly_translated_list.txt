@@ -1,0 +1,2 @@
+ftp://ftp.flybase.net/genomes/Drosophila_melanogaster/dmel_r6.14_FB2017_01/fasta/dmel-all-translation-r6.14.fasta.gz
+ftp://ftp.flybase.net/genomes/Drosophila_pseudoobscura/dpse_r3.04_FB2016_05/fasta/dpse-all-translation-r3.04.fasta.gz

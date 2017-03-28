@@ -61,6 +61,7 @@ RunIprScan <- function (fasta_file , result_folder) {
                            "-i", fasta_file, 
                            "-m", email, 
                            "-o", result_folder),stdout=TRUE)
+    print(output)
     print(paste("Running:",Sys.time(), "UTC"))
     }
     return(length(output))
